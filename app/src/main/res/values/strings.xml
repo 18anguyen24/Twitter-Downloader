@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Twitter_Downloader</string>
+    <string name="download">Download</string>
+    <string name="enter_link_here">Enter link here...</string>
 </resources>
