@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
 
             //feed id to function
             //now returns url of video, when given tweet ID, will be null if tweet has no video
+            //GETS HIGHEST QUALITY ONLY FOR NOW
             val videoURL = test(twitter_id)
             val request = DownloadManager.Request(Uri.parse("url string, will add later after we get return result from json"))
                 .setTitle("File")
