@@ -3,6 +3,7 @@ package com.bignerdranch.android.twitter_downloader
 import android.app.DownloadManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -55,10 +56,12 @@ class MainActivity : AppCompatActivity() {
             //GETS HIGHEST QUALITY ONLY FOR NOW
             val videoURL = test(twitter_id)
             val request = DownloadManager.Request(Uri.parse(videoURL))
-                .setTitle("File")
                 .setDescription("Downloading...")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setAllowedOverMetered(true)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, twitter_id+".mp4")
+
+
 
             val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             dm.enqueue(request)
