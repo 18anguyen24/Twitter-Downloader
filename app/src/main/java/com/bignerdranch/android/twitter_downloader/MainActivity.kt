@@ -1,9 +1,10 @@
 package com.bignerdranch.android.twitter_downloader
 
 import android.os.Bundle
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.bignerdranch.android.twitter_downloader.api.getTweetJSONByID
 import kotlinx.coroutines.runBlocking
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity() {
         button.setOnClickListener {
             string = editText.text.toString()
             textView.text = string
+            Toast.makeText(this@MainActivity, "Downloading...", Toast.LENGTH_SHORT).show()
         }
 
         test()
@@ -37,6 +39,5 @@ class MainActivity : AppCompatActivity() {
         getTweetJSONByID("1591434056323203072")
 
     }
-
 
 }
