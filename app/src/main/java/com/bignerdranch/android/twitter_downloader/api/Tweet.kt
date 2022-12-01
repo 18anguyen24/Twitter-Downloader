@@ -1,4 +1,5 @@
 package com.bignerdranch.android.twitter_downloader.api
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
@@ -7,6 +8,10 @@ import twitter4j.v2
 import twitter4j.JSONObject
 import twitter4j.TwitterObjectFactory
 import twitter4j.conf.ConfigurationBuilder
+
+import java.io.BufferedInputStream
+import java.io.FileOutputStream
+import java.net.URL
 
 
 
@@ -31,7 +36,7 @@ suspend fun getTweetJSONByID(tweetID: String) = coroutineScope {
             println(it)
 
             val json = JSONObject(TwitterObjectFactory.getRawJSON(it))
-            println(json.toString(3))
+            Log.d("TAG", json.toString(3))
         }
     }
 }
