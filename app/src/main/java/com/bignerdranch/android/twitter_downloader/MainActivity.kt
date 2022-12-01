@@ -54,14 +54,14 @@ class MainActivity : AppCompatActivity() {
             //now returns url of video, when given tweet ID, will be null if tweet has no video
             //GETS HIGHEST QUALITY ONLY FOR NOW
             val videoURL = test(twitter_id)
-            val request = DownloadManager.Request(Uri.parse("url string, will add later after we get return result from json"))
+            val request = DownloadManager.Request(Uri.parse(videoURL))
                 .setTitle("File")
                 .setDescription("Downloading...")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setAllowedOverMetered(true)
 
             val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
-            //dm.enqueue(request)
+            dm.enqueue(request)
 
             Toast.makeText(this@MainActivity, "Downloading...", Toast.LENGTH_SHORT).show()
         }
