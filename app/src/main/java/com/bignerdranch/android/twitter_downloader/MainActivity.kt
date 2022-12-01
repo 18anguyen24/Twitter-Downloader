@@ -8,15 +8,15 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bignerdranch.android.twitter_downloader.api.getTweetJSONByID
 import kotlinx.coroutines.runBlocking
 import android.util.Log
+import com.bignerdranch.android.twitter_downloader.api.Tweet.Companion.getTweetJSONByID
 import java.io.BufferedInputStream
 import java.io.FileOutputStream
 import java.net.URL
+import twitter4j.MediaKey
 
-
-private const val TAG = "Main Activity"
+private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,6 +32,14 @@ class MainActivity : AppCompatActivity() {
         editText = findViewById(R.id.textInputEditText)
         textView = findViewById(R.id.textView)
 
+        //TESTING TWEETS ONLY
+        //tweet with video
+        //test("1598154884003438593")
+        //tweet with only text
+        //test("1598347132385239041")
+        //tweet with only images
+        //test("1598345429363613699")
+
         button.setOnClickListener {
             //get user input
             string = editText.text.toString()
@@ -43,7 +51,8 @@ class MainActivity : AppCompatActivity() {
             val twitter_id = parse_slash.last()
 
             //feed id to function
-            test(twitter_id)
+            //now returns url of video, when given tweet ID, will be null if tweet has no video
+            val videoURL = test(twitter_id)
             val request = DownloadManager.Request(Uri.parse("url string, will add later after we get return result from json"))
                 .setTitle("File")
                 .setDescription("Downloading...")
@@ -72,8 +81,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun test(id: String) = runBlocking() {
-        getTweetJSONByID(id)
+        val tweetMediaMap = getTweetJSONByID(id).mediaMap
+        //val testKeyToMake = MediaKey("3_1598345418198470657")
+        //val hasKey = testVal.containsKey(testKeyToMake)
+        Log.d(TAG, tweetMediaMap.toString())
 
+        //key value for media that is the video, could be missing
+        var keyForVideo:MediaKey?=null
+
+        if(tweetMediaMap.isNotEmpty()) {
+            for ((key,value) in tweetMediaMap) {
+                if(value.type.toString() == "Video"){
+                    keyForVideo = key
+                }
+            }
+            if (keyForVideo != null) {
+                val value = tweetMediaMap.get(keyForVideo)
+                val videoInfo = value?.asVideo
+                val variants = videoInfo?.variants
+                //WRITE FUNCTION CALL OR SOMETHING THAT GETS VIDEO BASED ON QUALITY?
+                val firstVariant = variants?.get(variants.size-2)
+                val variantUrl = firstVariant?.url
+                Log.d(TAG, variantUrl!!)
+                return@runBlocking variantUrl
+            }
+            else{
+                //TWEET IS MISSING VIDEO
+                return@runBlocking null
+            }
+        }
+        else{
+            //TWEET IS MISSING MEDIA
+            return@runBlocking null
+        }
     }
 
 }
