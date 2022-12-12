@@ -1,27 +1,32 @@
 package com.bignerdranch.android.twitter_downloader
 
 import android.app.DownloadManager
+import android.content.ClipDescription.MIMETYPE_TEXT_PLAIN
+import android.content.ClipboardManager
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.coroutines.runBlocking
-import android.util.Log
 import com.bignerdranch.android.twitter_downloader.api.Tweet.Companion.getTweetJSONByID
+import kotlinx.coroutines.runBlocking
+import twitter4j.MediaKey
 import java.io.BufferedInputStream
 import java.io.FileOutputStream
 import java.net.URL
-import twitter4j.MediaKey
+
 
 private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var button: Button
+    lateinit var dLButton: Button
+    lateinit var pasteButton: Button
     lateinit var editText: EditText
     lateinit var string: String //use this to store the data of the EditText
     lateinit var textView: TextView
@@ -29,9 +34,13 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        button = findViewById(R.id.button)
+        dLButton = findViewById(R.id.button)
         editText = findViewById(R.id.textInputEditText)
-        textView = findViewById(R.id.textView)
+        pasteButton = findViewById(R.id.button3)
+        val clipboard: ClipboardManager =
+            getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        var pasteData = ""
+//        textView = findViewById(R.id.textView)
 
         //TESTING TWEETS ONLY
         //tweet with video
@@ -41,10 +50,29 @@ class MainActivity : AppCompatActivity() {
         //tweet with only images
         //test("1598345429363613699")
 
-        button.setOnClickListener {
+        //Listener to grab first data off of clipboard stack(if its valid plaintext) and place it in EditText field
+        pasteButton.setOnClickListener {
+            // If it does contain data, decide if you can handle the data.
+            if (!clipboard.hasPrimaryClip()) {
+
+            } else if (!clipboard.primaryClipDescription!!.hasMimeType(MIMETYPE_TEXT_PLAIN)) {
+                // since the clipboard has data but it is not plain text
+
+            } else {
+
+                //since the clipboard contains plain text.
+                val item = clipboard.primaryClip!!.getItemAt(0)
+
+                // Gets the clipboard as text.
+                pasteData = item.text.toString()
+            }
+            editText.setText(pasteData)
+        }
+
+        dLButton.setOnClickListener {
             //get user input
             string = editText.text.toString()
-            textView.text = string
+//            textView.text = string
 
             //parsing string and grab id of tweet
             val parse_question = string.split("?").toTypedArray()
