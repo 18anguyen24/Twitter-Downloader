@@ -13,7 +13,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bignerdranch.android.twitter_downloader.api.Tweet.Companion.getTweetJSONByID
+import com.bignerdranch.android.twitter_downloader.api.Tweet
 import kotlinx.coroutines.runBlocking
 import twitter4j.MediaKey
 import java.io.BufferedInputStream
@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var editText: EditText
     lateinit var string: String //use this to store the data of the EditText
     lateinit var textView: TextView
+    val twitterAPI = Tweet()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,8 +66,9 @@ class MainActivity : AppCompatActivity() {
 
                 // Gets the clipboard as text.
                 pasteData = item.text.toString()
+                editText.setText(pasteData)
             }
-            editText.setText(pasteData)
+
         }
 
         dLButton.setOnClickListener {
@@ -113,7 +115,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun test(id: String) = runBlocking() {
-        val tweetMediaMap = getTweetJSONByID(id).mediaMap
+        val tweetMediaMap = twitterAPI.getTweet(id).mediaMap
         //val testKeyToMake = MediaKey("3_1598345418198470657")
         //val hasKey = testVal.containsKey(testKeyToMake)
         Log.d(TAG, tweetMediaMap.toString())

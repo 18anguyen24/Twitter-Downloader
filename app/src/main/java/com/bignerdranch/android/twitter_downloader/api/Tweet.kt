@@ -19,20 +19,23 @@ fun accessTokenSecret() = "nKkbNRezzZdHAKlE9jkuV5QV18zeVZMMx5h38AMo6mkVy"
 private val TAG = Tweet::class.qualifiedName
 
 class Tweet {
-    companion object{
-        suspend fun getTweetJSONByID(tweetID: String) = coroutineScope {
-            withContext(Dispatchers.IO) {
+    val cb = ConfigurationBuilder()
 
-                //authenticate
-                val cb = ConfigurationBuilder()
-                cb.setOAuthConsumerKey(consumerKey())
-                cb.setOAuthConsumerSecret(consumerSecret())
-                cb.setOAuthAccessToken(accessToken())
-                cb.setOAuthAccessTokenSecret(accessTokenSecret())
-                val twitter = TwitterFactory(cb.setJSONStoreEnabled(true).build()).instance
+    init {
+        cb.setOAuthConsumerKey(consumerKey())
+        cb.setOAuthConsumerSecret(consumerSecret())
+        cb.setOAuthAccessToken(accessToken())
+        cb.setOAuthAccessTokenSecret(accessTokenSecret())
+    }
+    suspend fun getTweet(tweetID: String) = coroutineScope {
+        withContext(Dispatchers.IO) {
 
-                return@withContext twitter.v2.getTweets(tweetID.toLong())
-            }
+            //authenticate
+
+
+            val twitter = TwitterFactory(cb.setJSONStoreEnabled(true).build()).instance
+
+            return@withContext twitter.v2.getTweets(tweetID.toLong())
         }
     }
 }
