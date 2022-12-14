@@ -171,6 +171,7 @@ class MainActivity : AppCompatActivity() {
         val validLink = binding.linkContainer.helperText == null
         //add another boolean here to check if quality is selected
 
+
         if(validLink)
         {
 
@@ -238,6 +239,7 @@ class MainActivity : AppCompatActivity() {
         for((key,value) in twitterResponse.mediaMap){
             if(value.type.toString()=="Video"){
                 return true
+                // add thumbnail function here
             }
         }
         Toast.makeText(this@MainActivity, "Link has no video", Toast.LENGTH_SHORT).show()
