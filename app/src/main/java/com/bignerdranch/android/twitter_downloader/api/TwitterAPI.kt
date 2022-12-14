@@ -1,12 +1,8 @@
 package com.bignerdranch.android.twitter_downloader.api
-import android.os.Bundle
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import twitter4j.JSONObject
 import twitter4j.TwitterFactory
-import twitter4j.TwitterObjectFactory
 import twitter4j.v2
 import twitter4j.conf.ConfigurationBuilder
 
@@ -16,25 +12,21 @@ fun consumerSecret() = "DwsNLyytWv9ld1ELMxB76zKeUEIRmOBg3QPmAO5c7xXFi8mVZg"
 fun accessToken() = "1592655216196800512-Ypd6x98FRvlaCXp0HGdDilelxiFfLD"
 fun accessTokenSecret() = "nKkbNRezzZdHAKlE9jkuV5QV18zeVZMMx5h38AMo6mkVy"
 
-private val TAG = Tweet::class.qualifiedName
+private val TAG = TwitterAPI::class.qualifiedName
 
-class Tweet {
-    val cb = ConfigurationBuilder()
+class TwitterAPI {
+    private val cb = ConfigurationBuilder()
 
     init {
+        //authenticate
         cb.setOAuthConsumerKey(consumerKey())
         cb.setOAuthConsumerSecret(consumerSecret())
         cb.setOAuthAccessToken(accessToken())
         cb.setOAuthAccessTokenSecret(accessTokenSecret())
     }
-    suspend fun getTweet(tweetID: String) = coroutineScope {
+    suspend fun getTweetByID(tweetID: String) = coroutineScope {
         withContext(Dispatchers.IO) {
-
-            //authenticate
-
-
             val twitter = TwitterFactory(cb.setJSONStoreEnabled(true).build()).instance
-
             return@withContext twitter.v2.getTweets(tweetID.toLong())
         }
     }

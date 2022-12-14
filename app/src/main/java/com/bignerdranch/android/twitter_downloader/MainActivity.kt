@@ -1,19 +1,22 @@
 package com.bignerdranch.android.twitter_downloader
 
+import android.app.Activity
 import android.app.DownloadManager
 import android.content.ClipDescription.MIMETYPE_TEXT_PLAIN
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.bignerdranch.android.twitter_downloader.api.Tweet
+import com.bignerdranch.android.twitter_downloader.api.TwitterAPI
+import com.bignerdranch.android.twitter_downloader.databinding.ActivityMainBinding
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.runBlocking
 import twitter4j.MediaKey
 import java.io.BufferedInputStream
@@ -25,23 +28,60 @@ private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var dLButton: Button
-    lateinit var pasteButton: Button
-    lateinit var editText: EditText
-    lateinit var string: String //use this to store the data of the EditText
-    lateinit var textView: TextView
-    val twitterAPI = Tweet()
+    private lateinit var dLButton: Button
+    private lateinit var pasteButton: Button
+    private lateinit var editText: EditText
+    private lateinit var linkInputLayout: TextInputLayout
+    private lateinit var string: String //use this to store the data of the EditText
+    private lateinit var mySpinner: Spinner
+    private lateinit var binding: ActivityMainBinding
+
+    private val twitterAPI = TwitterAPI()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         dLButton = findViewById(R.id.button)
+        linkInputLayout = findViewById(R.id.linkContainer)
         editText = findViewById(R.id.textInputEditText)
         pasteButton = findViewById(R.id.button3)
+        mySpinner = findViewById(R.id.quality_spinner)
+
+        linkInputLayout.isHintEnabled = false
+
         val clipboard: ClipboardManager =
             getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         var pasteData = ""
-//        textView = findViewById(R.id.textView)
+
+        val qualities = resources.getStringArray(R.array.video_quality_options)
+        val spinnerAdapter = object : ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, qualities) {
+            override fun isEnabled(position: Int): Boolean {
+                // Disable the first item from Spinner
+                // First item will be used for hint
+                return position != 0
+            }
+
+            override fun getDropDownView(
+                position: Int,
+                convertView: View?,
+                parent: ViewGroup
+            ): View {
+                val view: TextView = super.getDropDownView(position, convertView, parent) as TextView
+                //set the color of first item in the drop down list to gray
+                if(position == 0) {
+                    view.setTextColor(Color.GRAY)
+                } else {
+                    //here it is possible to define color for other items by
+                    //view.setTextColor(Color.RED)
+                }
+                return view
+            }
+        }
+
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        mySpinner.adapter = spinnerAdapter
 
         //TESTING TWEETS ONLY
         //tweet with video
@@ -50,6 +90,24 @@ class MainActivity : AppCompatActivity() {
         //test("1598347132385239041")
         //tweet with only images
         //test("1598345429363613699")
+
+        mySpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener{
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+            }
+
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                val value = parent!!.getItemAtPosition(position).toString()
+                if(value == qualities[0]){
+                    (view as TextView).setTextColor(Color.GRAY)
+                }
+            }
+
+        }
 
         //Listener to grab first data off of clipboard stack(if its valid plaintext) and place it in EditText field
         pasteButton.setOnClickListener {
@@ -67,8 +125,8 @@ class MainActivity : AppCompatActivity() {
                 // Gets the clipboard as text.
                 pasteData = item.text.toString()
                 editText.setText(pasteData)
+                //Now check if the link is valid
             }
-
         }
 
         dLButton.setOnClickListener {
@@ -89,8 +147,8 @@ class MainActivity : AppCompatActivity() {
                 .setDescription("Downloading...")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setAllowedOverMetered(true)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, twitter_id+".mp4")
-
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "$twitter_id.mp4")
+                .setTitle("$twitter_id.mp4")
 
 
             val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
@@ -100,22 +158,40 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-    fun downloadFile(url: URL, fileName: String) {
-        url.openStream().use { inp ->
-            BufferedInputStream(inp).use { bis ->
-                FileOutputStream(fileName).use { fos ->
-                    val data = ByteArray(1024)
-                    var count: Int
-                    while (bis.read(data, 0, 1024).also { count = it } != -1) {
-                        fos.write(data, 0, count)
-                    }
-                }
-            }
-        }
+    
+    
+//    fun downloadFile(url: URL, fileName: String) {
+//        url.openStream().use { inp ->
+//            BufferedInputStream(inp).use { bis ->
+//                FileOutputStream(fileName).use { fos ->
+//                    val data = ByteArray(1024)
+//                    var count: Int
+//                    while (bis.read(data, 0, 1024).also { count = it } != -1) {
+//                        fos.write(data, 0, count)
+//                    }
+//                }
+//            }
+//        }
+//    }
+    
+    
+//    private fun linkTextFocusListener()
+//    {
+//        binding.textInputEditText.
+//        binding.textInputEditText.setOnFocusChangeListener { , focused ->
+//            if(!focused)
+//            {
+//            }
+//        }
+//    }
+
+    private fun validateLink()
+    {
+
     }
 
-    fun test(id: String) = runBlocking() {
-        val tweetMediaMap = twitterAPI.getTweet(id).mediaMap
+    private fun test(id: String) = runBlocking() {
+        val tweetMediaMap = twitterAPI.getTweetByID(id).mediaMap
         //val testKeyToMake = MediaKey("3_1598345418198470657")
         //val hasKey = testVal.containsKey(testKeyToMake)
         Log.d(TAG, tweetMediaMap.toString())
