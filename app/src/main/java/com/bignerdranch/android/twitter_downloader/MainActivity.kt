@@ -1,27 +1,24 @@
 package com.bignerdranch.android.twitter_downloader
 
-import android.app.Activity
-import android.app.DownloadManager
 import android.content.ClipDescription.MIMETYPE_TEXT_PLAIN
 import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.OnApplyWindowInsetsListener
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.bignerdranch.android.twitter_downloader.api.TwitterAPI
 import com.bignerdranch.android.twitter_downloader.databinding.ActivityMainBinding
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.runBlocking
-import twitter4j.MediaKey
-import java.io.BufferedInputStream
-import java.io.FileOutputStream
-import java.net.URL
+import twitter4j.TweetsResponse
 
 
 private const val TAG = "MainActivity"
@@ -32,7 +29,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pasteButton: Button
     private lateinit var editText: EditText
     private lateinit var linkInputLayout: TextInputLayout
-    private lateinit var string: String //use this to store the data of the EditText
     private lateinit var mySpinner: Spinner
     private lateinit var binding: ActivityMainBinding
 
@@ -43,11 +39,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        dLButton = findViewById(R.id.button)
+
+
+
+
+        linkTextFocusListener()
+
+
+        dLButton = findViewById(R.id.downloadButton)
         linkInputLayout = findViewById(R.id.linkContainer)
         editText = findViewById(R.id.textInputEditText)
-        pasteButton = findViewById(R.id.button3)
-        mySpinner = findViewById(R.id.quality_spinner)
+        pasteButton = findViewById(R.id.pasteButton)
+        mySpinner = findViewById(R.id.qualitySpinner)
 
         linkInputLayout.isHintEnabled = false
 
@@ -91,6 +94,7 @@ class MainActivity : AppCompatActivity() {
         //tweet with only images
         //test("1598345429363613699")
 
+
         mySpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener{
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -129,101 +133,150 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        dLButton.setOnClickListener {
-            //get user input
-            string = editText.text.toString()
-//            textView.text = string
+        binding.downloadButton.setOnClickListener { download() }
 
-            //parsing string and grab id of tweet
-            val parse_question = string.split("?").toTypedArray()
-            val parse_slash = parse_question[0].split("/").toTypedArray()
-            val twitter_id = parse_slash.last()
-
-            //feed id to function
-            //now returns url of video, when given tweet ID, will be null if tweet has no video
-            //GETS HIGHEST QUALITY ONLY FOR NOW
-            val videoURL = test(twitter_id)
-            val request = DownloadManager.Request(Uri.parse(videoURL))
-                .setDescription("Downloading...")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setAllowedOverMetered(true)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "$twitter_id.mp4")
-                .setTitle("$twitter_id.mp4")
-
-
-            val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
-            dm.enqueue(request)
-
-            Toast.makeText(this@MainActivity, "Downloading...", Toast.LENGTH_SHORT).show()
-        }
+//        dLButton.setOnClickListener {
+//            //get user input
+//            string = editText.text.toString()
+////            textView.text = string
+//
+//            //parsing string and grab id of tweet
+//            val parse_question = string.split("?").toTypedArray()
+//            val parse_slash = parse_question[0].split("/").toTypedArray()
+//            val twitter_id = parse_slash.last()
+//
+//            //feed id to function
+//            //now returns url of video, when given tweet ID, will be null if tweet has no video
+//            //GETS HIGHEST QUALITY ONLY FOR NOW
+//            val videoURL = test(twitter_id)
+//            val request = DownloadManager.Request(Uri.parse(videoURL))
+//                .setDescription("Downloading...")
+//                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+//                .setAllowedOverMetered(true)
+//                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "$twitter_id.mp4")
+//                .setTitle("$twitter_id.mp4")
+//
+//
+//            val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+//            dm.enqueue(request)
+//
+//            Toast.makeText(this@MainActivity, "Downloading...", Toast.LENGTH_SHORT).show()
+//        }
 
     }
-    
-    
-//    fun downloadFile(url: URL, fileName: String) {
-//        url.openStream().use { inp ->
-//            BufferedInputStream(inp).use { bis ->
-//                FileOutputStream(fileName).use { fos ->
-//                    val data = ByteArray(1024)
-//                    var count: Int
-//                    while (bis.read(data, 0, 1024).also { count = it } != -1) {
-//                        fos.write(data, 0, count)
-//                    }
-//                }
-//            }
-//        }
-//    }
-    
-    
-//    private fun linkTextFocusListener()
-//    {
-//        binding.textInputEditText.
-//        binding.textInputEditText.setOnFocusChangeListener { , focused ->
-//            if(!focused)
-//            {
-//            }
-//        }
-//    }
 
-    private fun validateLink()
+    private fun download()
     {
+        val validLink = binding.linkContainer.helperText == null
+        //add another boolean here to check if quality is selected
+
+        if(validLink)
+        {
+
+        }
+        else
+        {
+            Toast.makeText(this@MainActivity, "Enter Valid Link First", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun linkTextFocusListener()
+    {
+        val window = this.window
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        val callBack = OnApplyWindowInsetsListener { view, insets ->
+            val imeHeight = insets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom?:0
+            Log.e("tag", "onKeyboardOpenOrClose imeHeight = $imeHeight")
+// todo: logic
+            val isKeyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            if (isKeyboardVisible) {
+                // do something
+                Log.d(TAG,"Keyboard open")
+            }else{
+                Log.d(TAG,"Keyboard closed")
+                binding.linkContainer.helperText = validateLink()
+            }
+            insets?: WindowInsetsCompat(null)
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.rootConstraintLayout), callBack)
 
     }
 
-    private fun test(id: String) = runBlocking() {
-        val tweetMediaMap = twitterAPI.getTweetByID(id).mediaMap
-        //val testKeyToMake = MediaKey("3_1598345418198470657")
-        //val hasKey = testVal.containsKey(testKeyToMake)
-        Log.d(TAG, tweetMediaMap.toString())
-
-        //key value for media that is the video, could be missing
-        var keyForVideo:MediaKey?=null
-
-        if(tweetMediaMap.isNotEmpty()) {
-            for ((key,value) in tweetMediaMap) {
-                if(value.type.toString() == "Video"){
-                    keyForVideo = key
-                }
-            }
-            if (keyForVideo != null) {
-                val value = tweetMediaMap.get(keyForVideo)
-                val videoInfo = value?.asVideo
-                val variants = videoInfo?.variants
-                //WRITE FUNCTION CALL OR SOMETHING THAT GETS VIDEO BASED ON QUALITY?
-                val firstVariant = variants?.get(variants.size-2)
-                val variantUrl = firstVariant?.url
-                Log.d(TAG, variantUrl!!)
-                return@runBlocking variantUrl
-            }
-            else{
-                //TWEET IS MISSING VIDEO
-                return@runBlocking null
-            }
-        }
-        else{
-            //TWEET IS MISSING MEDIA
+    private fun validateLink(): String? = runBlocking{
+        val linkText = binding.textInputEditText.text.toString()
+        if (validLink(linkText))
+        {
             return@runBlocking null
         }
+        return@runBlocking "Invalid Link"
+    }
+
+    private suspend fun validLink(linkText: String): Boolean{
+
+        val parse_question = linkText.split("?").toTypedArray()
+        val parse_slash = parse_question[0].split("/").toTypedArray()
+        val twitter_id = parse_slash.last()
+
+        //give id to twitter API
+        val twitterResponse = twitterAPI.getTweetByID(twitter_id)
+        if(twitterResponse == null)
+        {
+            return false
+        }
+        if(!twitterResponse.errors.isEmpty())
+        {
+            return false
+        }
+        if (twitterResponse.mediaMap.isEmpty())
+        {
+            Toast.makeText(this@MainActivity, "Link has no video", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        for((key,value) in twitterResponse.mediaMap){
+            if(value.type.toString()=="Video"){
+                return true
+            }
+        }
+        Toast.makeText(this@MainActivity, "Link has no video", Toast.LENGTH_SHORT).show()
+        return false
+    }
+
+    private suspend fun getTweet(id: String): TweetsResponse? {
+        val tweet = twitterAPI.getTweetByID(id)
+        //val testKeyToMake = MediaKey("3_1598345418198470657")
+        //val hasKey = testVal.containsKey(testKeyToMake)
+        return tweet
+
+//        //key value for media that is the video, could be missing
+//        var keyForVideo:MediaKey?=null
+//
+//        if(tweetMediaMap.isNotEmpty()) {
+//            for ((key,value) in tweetMediaMap) {
+//                if(value.type.toString() == "Video"){
+//                    keyForVideo = key
+//                }
+//            }
+//            if (keyForVideo != null) {
+//                val value = tweetMediaMap.get(keyForVideo)
+//                val videoInfo = value?.asVideo
+//                val variants = videoInfo?.variants
+//                //WRITE FUNCTION CALL OR SOMETHING THAT GETS VIDEO BASED ON QUALITY?
+//                val firstVariant = variants?.get(variants.size-2)
+//                val variantUrl = firstVariant?.url
+//                Log.d(TAG, variantUrl!!)
+//                return@runBlocking variantUrl
+//            }
+//            else{
+//                //TWEET IS MISSING VIDEO
+//                return@runBlocking null
+//            }
+//        }
+//        else{
+//            //TWEET IS MISSING MEDIA
+//            return@runBlocking null
+//        }
     }
 
 }

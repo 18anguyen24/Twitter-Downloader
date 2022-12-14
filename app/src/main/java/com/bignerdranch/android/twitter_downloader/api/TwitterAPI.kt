@@ -2,6 +2,7 @@ package com.bignerdranch.android.twitter_downloader.api
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import twitter4j.Twitter
 import twitter4j.TwitterFactory
 import twitter4j.v2
 import twitter4j.conf.ConfigurationBuilder
@@ -16,18 +17,26 @@ private val TAG = TwitterAPI::class.qualifiedName
 
 class TwitterAPI {
     private val cb = ConfigurationBuilder()
-
+    private var twitter : Twitter
     init {
         //authenticate
         cb.setOAuthConsumerKey(consumerKey())
         cb.setOAuthConsumerSecret(consumerSecret())
         cb.setOAuthAccessToken(accessToken())
         cb.setOAuthAccessTokenSecret(accessTokenSecret())
+        twitter = TwitterFactory(cb.setJSONStoreEnabled(true).build()).instance
     }
     suspend fun getTweetByID(tweetID: String) = coroutineScope {
         withContext(Dispatchers.IO) {
-            val twitter = TwitterFactory(cb.setJSONStoreEnabled(true).build()).instance
-            return@withContext twitter.v2.getTweets(tweetID.toLong())
+
+            try{
+                return@withContext twitter.v2.getTweets(tweetID.toLong())
+            }
+            catch (e: java.lang.NumberFormatException)
+            {
+                return@withContext null
+            }
+
         }
     }
 }
