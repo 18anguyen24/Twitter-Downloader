@@ -128,7 +128,8 @@ class MainActivity : AppCompatActivity() {
 
                 // Gets the clipboard as text.
                 pasteData = item.text.toString()
-                editText.setText(pasteData)
+                binding.textInputEditText.setText(pasteData)
+                binding.linkContainer.helperText = validateLink()
                 //Now check if the link is valid
             }
         }
