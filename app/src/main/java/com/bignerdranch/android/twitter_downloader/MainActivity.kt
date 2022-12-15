@@ -1,12 +1,14 @@
-package com.bignerdranch.android.twitter_downloader
+package com.bignerdranch .android.twitter_downloader
 
+import android.app.DownloadManager
 import android.content.ClipDescription.MIMETYPE_TEXT_PLAIN
 import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -20,9 +22,9 @@ import com.bignerdranch.android.twitter_downloader.api.TwitterAPI
 import com.bignerdranch.android.twitter_downloader.databinding.ActivityMainBinding
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.*
+import twitter4j.Media
+import twitter4j.MediaKey
 import twitter4j.TweetsResponse
-import java.io.IOException
-import java.net.URL
 
 
 private const val TAG = "MainActivity"
@@ -36,7 +38,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var twitterResponse: TweetsResponse? = null
     private var image: Bitmap? = null
-
+    private var selectedBitrate: Int? = null
+    private var tweetID: Long? = null
+    private var videoKey: MediaKey? = null
+    private var spinnerAdapter: ArrayAdapter<String>? = null
     private val twitterAPI = TwitterAPI()
 
 
@@ -59,8 +64,9 @@ class MainActivity : AppCompatActivity() {
             getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         var pasteData = ""
 
-        val qualities = resources.getStringArray(R.array.video_quality_options)
-        val spinnerAdapter = object : ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, qualities) {
+        val qualities2 = resources.getStringArray(R.array.video_quality_options)
+        val qualities = qualities2.toMutableList()
+        spinnerAdapter = object : ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, qualities) {
             override fun isEnabled(position: Int): Boolean {
                 // Disable the first item from Spinner
                 // First item will be used for hint
@@ -70,7 +76,7 @@ class MainActivity : AppCompatActivity() {
             override fun getDropDownView(
                 position: Int,
                 convertView: View?,
-                parent: ViewGroup
+                parent: ViewGroup,
             ): View {
                 val view: TextView = super.getDropDownView(position, convertView, parent) as TextView
                 //set the color of first item in the drop down list to gray
@@ -84,8 +90,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        (spinnerAdapter as ArrayAdapter<String>).setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         mySpinner.adapter = spinnerAdapter
+
 
         //TESTING TWEETS ONLY
         //tweet with video
@@ -104,7 +111,7 @@ class MainActivity : AppCompatActivity() {
                 parent: AdapterView<*>?,
                 view: View?,
                 position: Int,
-                id: Long
+                id: Long,
             ) {
                 val value = parent!!.getItemAtPosition(position).toString()
                 if(value == qualities[0]){
@@ -130,8 +137,22 @@ class MainActivity : AppCompatActivity() {
                 // Gets the clipboard as text.
                 pasteData = item.text.toString()
                 binding.textInputEditText.setText(pasteData)
-                binding.linkContainer.helperText = validateLink()
+
+                //remove previous bitrates if needed
+                if(spinnerAdapter?.count!! >1)
+                {
+                    val end = spinnerAdapter?.count!!-1
+                    Log.d(TAG, end.toString())
+                    for(i in 1..end)
+                    {
+                        Log.d(TAG, i.toString())
+                        val currentItem = spinnerAdapter!!.getItem(1)
+                        spinnerAdapter!!.remove(currentItem)
+                    }
+                }
+
                 //Now check if the link is valid
+                binding.linkContainer.helperText = validateLink()
             }
         }
 
@@ -177,7 +198,25 @@ class MainActivity : AppCompatActivity() {
             //check if quality is selected
             if(qualitySelected)
             {
+                //download video based on quality
+                val a = twitterResponse?.mediaMap
+                val b = a?.get(videoKey)
+                val video = b?.asVideo
+                val variants = video?.variants
+                val selectedVariant = variants?.get(selectedBitrate!!-1)
+                val downloadURL = selectedVariant?.url
 
+                val request = DownloadManager.Request(Uri.parse(downloadURL))
+                    .setDescription("Downloading...")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setAllowedOverMetered(true)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "$tweetID.mp4")
+                    .setTitle("$tweetID.mp4")
+
+                val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                dm.enqueue(request)
+
+                Toast.makeText(this@MainActivity, "Downloading...", Toast.LENGTH_SHORT).show()
             }
             else
             {
@@ -204,6 +243,18 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG,"Keyboard open")
             }else{
                 Log.d(TAG,"Keyboard closed")
+
+                if(spinnerAdapter?.count!! >1)
+                {
+                    val end = spinnerAdapter?.count!!-1
+                    Log.d(TAG, end.toString())
+                    for(i in 1..end)
+                    {
+                        Log.d(TAG, i.toString())
+                        val currentItem = spinnerAdapter!!.getItem(1)
+                        spinnerAdapter!!.remove(currentItem)
+                    }
+                }
                 binding.linkContainer.helperText = validateLink()
             }
             insets?: WindowInsetsCompat(null)
@@ -245,12 +296,29 @@ class MainActivity : AppCompatActivity() {
         }
         for((key,value) in twitterResponse!!.mediaMap){
             if(value.type.toString()=="Video"){
+                tweetID = twitter_id.toLong()
                 //first add thumbnail?
+                videoKey = key
                 val a = value.asVideo
-                val urlString = a.previewImageUrl
-                Log.d(TAG,urlString)
-                getBitmapFromURL(urlString)
-                binding.thumbnailImageView.setImageBitmap(image)
+//                val urlString = a.previewImageUrl
+//                Log.d(TAG,urlString)
+//                //getBitmapFromURL(urlString)
+//
+//                binding.thumbnailImageView.setImageBitmap(image)
+
+                //now add qualities
+                val variants = a.variants
+                val varIterator = variants.iterator()
+                Log.d(TAG, variants.contentToString())
+                while(varIterator.hasNext())
+                {
+                    val b = varIterator.next()
+                    val bitrateString = b.bitRate.toString()
+                    if(bitrateString != "null")
+                    {
+                        spinnerAdapter?.add(bitrateString)
+                    }
+                }
                 return true
             }
         }
@@ -259,20 +327,51 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun validateQuality(): Boolean{
-        return false
+        val item = mySpinner.selectedItemId
+        if(item.toInt() == 0)
+        {
+            return false
+        }
+        selectedBitrate = item.toInt()
+        return true
     }
 
-    private fun getBitmapFromURL(src: String?) {
-        CoroutineScope(Job() + Dispatchers.IO).launch {
-            try {
-                val url = URL(src)
-                val bitMap = BitmapFactory.decodeStream(url.openConnection().getInputStream())
-                image = Bitmap.createScaledBitmap(bitMap, 100, 100, true)
-            } catch (e: IOException) {
-                // Log exception
-            }
-        }
-    }
+//    private fun getBitmapFromURL(src: String?) {
+//        CoroutineScope(Job() + Dispatchers.IO).launch {
+//            try {
+//                val url = URL(src)
+//                Log.d(TAG,"testing1")
+//                val bitMap = BitmapFactory.decodeStream(url.openConnection().getInputStream())
+//                image = Bitmap.createScaledBitmap(bitMap, 100, 100, true)
+//                Log.d(TAG,"testing2")
+//            } catch (e: Throwable) {
+//                // Log exception
+//                Log.d(TAG,"testing3")
+//            }
+//            Log.d(TAG,"testing4")
+//        }
+//        Log.d(TAG,"testing6")
+//    }
+
+//    private fun getBitmapFromURL2(src: String?){
+//        CoroutineScope(Job() + Dispatchers.IO).launch {
+//            try {
+//                Log.d(TAG,"testing1")
+//                val url = URL(src)
+//                val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
+//                connection.setDoInput(true)
+//                connection.connect()
+//                Log.d(TAG,"testing2")
+//                val input: InputStream = connection.getInputStream()
+//                Log.d(TAG,"testing2")
+//                image = BitmapFactory.decodeStream(input)
+//            } catch (e: IOException) {
+//                // Log exception
+//                Log.d(TAG,"testing3")
+//            }
+//        }
+//
+//    }
 
     private suspend fun getTweet(id: String): TweetsResponse? {
         val tweet = twitterAPI.getTweetByID(id)

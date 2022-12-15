@@ -5,7 +5,7 @@
     <string name="test_view">Test View</string>
     <string name="paste_from_clipboard">Paste</string>
     <string-array name="video_quality_options">
-        <item>Quality…</item>
+        <item>Bitrate…</item>
     </string-array>
 </resources>
 
