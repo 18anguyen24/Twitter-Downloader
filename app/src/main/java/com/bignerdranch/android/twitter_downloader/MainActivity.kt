@@ -210,7 +210,7 @@ class MainActivity : AppCompatActivity() {
                     .setDescription("Downloading...")
                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                     .setAllowedOverMetered(true)
-                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "$tweetID.mp4")
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, tweetID.toString() +"-"+ selectedBitrate.toString() + ".mp4")
                     .setTitle("$tweetID.mp4")
 
                 val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
