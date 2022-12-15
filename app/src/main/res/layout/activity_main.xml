@@ -8,6 +8,18 @@
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
+    <ImageView
+        android:id="@+id/thumbnailImageView"
+        android:layout_width="192dp"
+        android:layout_height="195dp"
+        android:src="@android:color/holo_blue_dark"
+        app:layout_constraintBottom_toBottomOf="@id/linkContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.377" />
+
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:id="@+id/linkContainer"

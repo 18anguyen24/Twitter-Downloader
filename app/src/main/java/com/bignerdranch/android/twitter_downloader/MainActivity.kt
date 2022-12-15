@@ -3,6 +3,8 @@ package com.bignerdranch.android.twitter_downloader
 import android.content.ClipDescription.MIMETYPE_TEXT_PLAIN
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -17,8 +19,10 @@ import androidx.core.view.WindowInsetsCompat
 import com.bignerdranch.android.twitter_downloader.api.TwitterAPI
 import com.bignerdranch.android.twitter_downloader.databinding.ActivityMainBinding
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import twitter4j.TweetsResponse
+import java.io.IOException
+import java.net.URL
 
 
 private const val TAG = "MainActivity"
@@ -27,28 +31,25 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var dLButton: Button
     private lateinit var pasteButton: Button
-    private lateinit var editText: EditText
     private lateinit var linkInputLayout: TextInputLayout
     private lateinit var mySpinner: Spinner
     private lateinit var binding: ActivityMainBinding
+    private var twitterResponse: TweetsResponse? = null
+    private var image: Bitmap? = null
 
     private val twitterAPI = TwitterAPI()
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-
-
-
         linkTextFocusListener()
 
 
         dLButton = findViewById(R.id.downloadButton)
         linkInputLayout = findViewById(R.id.linkContainer)
-        editText = findViewById(R.id.textInputEditText)
         pasteButton = findViewById(R.id.pasteButton)
         mySpinner = findViewById(R.id.qualitySpinner)
 
@@ -166,15 +167,22 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun download()
-    {
+    private fun download() = runBlocking {
         val validLink = binding.linkContainer.helperText == null
         //add another boolean here to check if quality is selected
-
+        val qualitySelected = validateQuality()
 
         if(validLink)
         {
+            //check if quality is selected
+            if(qualitySelected)
+            {
 
+            }
+            else
+            {
+                Toast.makeText(this@MainActivity, "Select Quality First", Toast.LENGTH_SHORT).show()
+            }
         }
         else
         {
@@ -190,7 +198,6 @@ class MainActivity : AppCompatActivity() {
         val callBack = OnApplyWindowInsetsListener { view, insets ->
             val imeHeight = insets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom?:0
             Log.e("tag", "onKeyboardOpenOrClose imeHeight = $imeHeight")
-// todo: logic
             val isKeyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             if (isKeyboardVisible) {
                 // do something
@@ -222,28 +229,49 @@ class MainActivity : AppCompatActivity() {
         val twitter_id = parse_slash.last()
 
         //give id to twitter API
-        val twitterResponse = twitterAPI.getTweetByID(twitter_id)
+        twitterResponse = twitterAPI.getTweetByID(twitter_id)
         if(twitterResponse == null)
         {
             return false
         }
-        if(!twitterResponse.errors.isEmpty())
+        if(twitterResponse!!.errors.isNotEmpty())
         {
             return false
         }
-        if (twitterResponse.mediaMap.isEmpty())
+        if (twitterResponse!!.mediaMap.isEmpty())
         {
             Toast.makeText(this@MainActivity, "Link has no video", Toast.LENGTH_SHORT).show()
             return false
         }
-        for((key,value) in twitterResponse.mediaMap){
+        for((key,value) in twitterResponse!!.mediaMap){
             if(value.type.toString()=="Video"){
+                //first add thumbnail?
+                val a = value.asVideo
+                val urlString = a.previewImageUrl
+                Log.d(TAG,urlString)
+                getBitmapFromURL(urlString)
+                binding.thumbnailImageView.setImageBitmap(image)
                 return true
-                // add thumbnail function here
             }
         }
         Toast.makeText(this@MainActivity, "Link has no video", Toast.LENGTH_SHORT).show()
         return false
+    }
+
+    private fun validateQuality(): Boolean{
+        return false
+    }
+
+    private fun getBitmapFromURL(src: String?) {
+        CoroutineScope(Job() + Dispatchers.IO).launch {
+            try {
+                val url = URL(src)
+                val bitMap = BitmapFactory.decodeStream(url.openConnection().getInputStream())
+                image = Bitmap.createScaledBitmap(bitMap, 100, 100, true)
+            } catch (e: IOException) {
+                // Log exception
+            }
+        }
     }
 
     private suspend fun getTweet(id: String): TweetsResponse? {
