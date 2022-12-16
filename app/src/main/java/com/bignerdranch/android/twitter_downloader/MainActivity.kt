@@ -1,9 +1,11 @@
 package com.bignerdranch .android.twitter_downloader
 
+import android.Manifest
 import android.app.DownloadManager
 import android.content.ClipDescription.MIMETYPE_TEXT_PLAIN
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
@@ -14,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -22,8 +25,7 @@ import com.bignerdranch.android.twitter_downloader.api.TwitterAPI
 import com.bignerdranch.android.twitter_downloader.databinding.ActivityMainBinding
 import com.bumptech.glide.Glide
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.*
-import twitter4j.Media
+import kotlinx.coroutines.runBlocking
 import twitter4j.MediaKey
 import twitter4j.TweetsResponse
 
@@ -157,7 +159,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.downloadButton.setOnClickListener { download() }
+        binding.downloadButton.setOnClickListener {
+            download() }
 
 //        dLButton.setOnClickListener {
 //            //get user input
@@ -186,7 +189,13 @@ class MainActivity : AppCompatActivity() {
 //
 //            Toast.makeText(this@MainActivity, "Downloading...", Toast.LENGTH_SHORT).show()
 //        }
-
+        val permissionsStorage = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        val requestExternalStorage = 1
+        val permission =
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, permissionsStorage, requestExternalStorage)
+        }
     }
 
     private fun download() = runBlocking {
@@ -298,14 +307,11 @@ class MainActivity : AppCompatActivity() {
         for((key,value) in twitterResponse!!.mediaMap){
             if(value.type.toString()=="Video"){
                 tweetID = twitter_id.toLong()
-                //first add thumbnail?
+
+                //adds thumbnail
                 videoKey = key
                 val a = value.asVideo
                 val urlString = a.previewImageUrl
-//                Log.d(TAG,urlString)
-//                //getBitmapFromURL(urlString)
-//
-//                binding.thumbnailImageView.setImageBitmap(image)
                 Glide.with(this).load(urlString).into(binding.thumbnailImageView)
 
                 //now add qualities
