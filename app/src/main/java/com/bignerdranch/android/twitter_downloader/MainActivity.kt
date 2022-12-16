@@ -20,6 +20,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.bignerdranch.android.twitter_downloader.api.TwitterAPI
 import com.bignerdranch.android.twitter_downloader.databinding.ActivityMainBinding
+import com.bumptech.glide.Glide
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.*
 import twitter4j.Media
@@ -300,11 +301,12 @@ class MainActivity : AppCompatActivity() {
                 //first add thumbnail?
                 videoKey = key
                 val a = value.asVideo
-//                val urlString = a.previewImageUrl
+                val urlString = a.previewImageUrl
 //                Log.d(TAG,urlString)
 //                //getBitmapFromURL(urlString)
 //
 //                binding.thumbnailImageView.setImageBitmap(image)
+                Glide.with(this).load(urlString).into(binding.thumbnailImageView)
 
                 //now add qualities
                 val variants = a.variants
