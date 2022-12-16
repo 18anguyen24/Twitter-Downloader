@@ -28,6 +28,8 @@ import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.runBlocking
 import twitter4j.MediaKey
 import twitter4j.TweetsResponse
+import android.widget.Switch
+import androidx.appcompat.app.AppCompatDelegate
 
 
 private const val TAG = "MainActivity"
@@ -55,6 +57,21 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         linkTextFocusListener()
 
+
+        val btn = findViewById<Switch>(R.id.darkModeSwitch)
+
+        btn.setOnCheckedChangeListener { _, isChecked ->
+
+            if (btn.isChecked) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                delegate.applyDayNight()
+                btn.text = "Disable dark mode"
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                delegate.applyDayNight()
+                btn.text = "Enable dark mode"
+            }
+        }
 
         dLButton = findViewById(R.id.downloadButton)
         linkInputLayout = findViewById(R.id.linkContainer)
@@ -118,7 +135,7 @@ class MainActivity : AppCompatActivity() {
             ) {
                 val value = parent!!.getItemAtPosition(position).toString()
                 if(value == qualities[0]){
-                    (view as TextView).setTextColor(Color.GRAY)
+//                    (view as TextView).setTextColor(Color.GRAY)
                 }
             }
 
